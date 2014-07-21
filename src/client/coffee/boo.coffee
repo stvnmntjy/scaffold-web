@@ -1,0 +1,2 @@
+soo = -> 'too'
+coo = -> too()

@@ -1,0 +1,32 @@
+{
+  "name": "scaffold-web",
+  "description": "scaffolding project for web apps",
+  "version": "1.0.0",
+  "license": "MIT",
+  "keywords": [
+    "express",
+    "grunt",
+    "coffee",
+    "jade",
+    "less",
+    "karma",
+    "mocha",
+    "chai"
+  ],
+  "authors": [
+    {
+      "name": "Steven MountJoy"
+    }
+  ],
+  "homepage": "https://github.com/stvnmntjy/scaffold-web",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/stvnmntjy/scaffold-web"
+  },
+  "private": true,
+  "dependencies": {
+    "react": "~0.11.0",
+    "bootstrap": "~3.2.0",
+    "font-awesome": "~4.1.0"
+  }
+}
