@@ -1,6 +1,9 @@
 _ = require 'lodash'
 
-# folders
+###########
+# folders #
+###########
+
 _src = './src'
 _srcServer = "#{_src}/server"
 _srcClient = "#{_src}/client"
@@ -8,55 +11,61 @@ _srcCoffee = "#{_srcClient}/coffee"
 _srcJade = "#{_srcClient}/jade"
 _srcLess = "#{_srcClient}/less"
 _srcImg = "#{_srcClient}/img"
+
+_test = './test'
+_testUnit = "#{_test}/unit"
+_testInteg = "#{_test}/integration"
+_testSystem = "#{_test}/system"
+
 _public = './public'
+_publicDoc = "#{_public}/docs"
 _publicHtml = "#{_public}/html"
 _publicCss = "#{_public}/css"
 _publicFonts = "#{_public}/fonts"
 _publicImg = "#{_public}/img"
 _publicJs = "#{_public}/js"
-_bower = "./bower_components"
 
-# files
-_clientCoffee = _.map [
-  # order src/client/coffee files here
-  'foo.coffee'
-  'boo.coffee'
-], (file) -> "#{_srcCoffee}/#{file}"
+_npm = './node_modules'
 
-_clientLess = _.map [
-  # order src/client/less files here
+##########
+# source #
+##########
+
+_filesLess = _.map [
+  # order client less here
   'foo.less'
 ], (file) -> "#{_srcLess}/#{file}"
 
-_clientImg = _.map [
-  # order src/client/img files here
+_filesImg = _.map [
+  # order client img here
 ], (file) -> "#{_srcImg}/#{file}"
 
-# bower
+#############
+# libraries #
+#############
+
+# npm dependency module ids
+_npmMods = [
+  'lodash'
+]
 
 # dev
-_bowerJsDev = _.map [
-  # order bower dev js here
-], (file) -> "#{_bower}/#{file}"
-_bowerCssDev = _.map [
-  # order bower dev css here
-], (file) -> "#{_bower}/#{file}"
+_npmCssDev = _.map [
+  # order npm dev css here
+], (file) -> "#{_npm}/#{file}"
 
 # prod
-_bowerJsProd = _.map [
-  # order bower prod js here
-], (file) -> "#{_bower}/#{file}"
-_bowerCssProd = _.map [
-  # order bower dev css here
-], (file) -> "#{_bower}/#{file}"
+_npmCssProd = _.map [
+  # order npm prod css here
+], (file) -> "#{_npm}/#{file}"
 
 # common
-_bowerImg = _.map [
-  # order bower img here
-], (file) -> "#{_bower}/#{file}"
-_bowerFont = _.map [
-  # order bower font here
-], (file) -> "#{_bower}/#{file}"
+_npmImg = _.map [
+  # order npm img here
+], (file) -> "#{_npm}/#{file}"
+_npmFont = _.map [
+  # order npm font here
+], (file) -> "#{_npm}/#{file}"
 
 copyDir = (srcDir, destDir, files) ->
   src: files
@@ -67,32 +76,44 @@ copyDir = (srcDir, destDir, files) ->
   cwd: srcDir
   filter: 'isFile'
 
+#########
+# grunt #
+#########
+
 module.exports = (grunt) ->
   grunt.initConfig
-    pkg: grunt.file.readJSON 'package.json'
+    autoprefixer:
+      all:
+        src: "#{_publicCss}/*.css"
+    browserify:
+      all:
+        options:
+          require: _npmMods
+          transform: [
+            [
+              'coffeeify'
+              {
+                sourceMap: false
+              }
+            ]
+          ]
+          plugin: [
+            [
+              'minifyify'
+              {
+                map: "/js/bundle.map"
+                output: "#{_publicJs}/bundle.map"
+              }
+            ]
+          ]
+        files: [
+          {
+            src: ["#{_srcCoffee}/**/*.coffee"]
+            dest: "#{_publicJs}/bundle.js"
+            nonull: true
+          }
+        ]
     clean: ["#{_public}"]
-    coffee:
-      dev:
-        options:
-          join: true
-          sourceMap: true
-        files: [
-          {
-            src: _clientCoffee
-            dest: "#{_publicJs}/client.js"
-            nonull: true
-          }
-        ]
-      prod:
-        options:
-          join: true
-        files: [
-          {
-            src: _clientCoffee
-            dest: "#{_publicJs}/client.js"
-            nonull: true
-          }
-        ]
     concat:
       dev:
         options:
@@ -100,14 +121,8 @@ module.exports = (grunt) ->
         files: [
           # css
           {
-            src: _bowerCssDev
+            src: _npmCssDev
             dest: "#{_publicCss}/libs.css"
-            nonull: true
-          }
-          # js
-          {
-            src: _bowerJsDev
-            dest: "#{_publicJs}/libs.js"
             nonull: true
           }
         ]
@@ -121,14 +136,8 @@ module.exports = (grunt) ->
         files: [
           # css
           {
-            src: _bowerCssProd
+            src: _npmCssProd
             dest: "#{_publicCss}/libs.css"
-            nonull: true
-          }
-          # js
-          {
-            src: _bowerJsProd
-            dest: "#{_publicJs}/libs.js"
             nonull: true
           }
         ]
@@ -136,12 +145,29 @@ module.exports = (grunt) ->
       copy:
         files: [
           # client img
-          copyDir __dirname, _publicImg, _clientImg
-          # bower font
-          copyDir __dirname, _publicFonts, _bowerFont
-          # bower img
-          copyDir __dirname, _publicImg, _bowerImg
+          copyDir __dirname, _publicImg, _filesImg
+          # npm font
+          copyDir __dirname, _publicFonts, _npmFont
+          # npm img
+          copyDir __dirname, _publicImg, _npmImg
         ]
+    docco:
+      root:
+        options:
+          output: "#{_publicDoc}/root"
+        src: ["#{__dirname}/*.coffee"]
+      server:
+        options:
+          output: "#{_publicDoc}/server"
+        src: ["#{_srcServer}/**/*.coffee"]
+      source:
+        options:
+          output: "#{_publicDoc}/src"
+        src: ["#{_srcCoffee}/**/*.coffee"]
+      test:
+        options:
+          output: "#{_publicDoc}/test"
+        src: ["#{_test}/**/*.coffee"]
     # each file will need its own object in the array since javascript does
     # not support dynamic runtime object keys
     jade:
@@ -166,86 +192,72 @@ module.exports = (grunt) ->
           }
         ]
     less:
+      options:
+        strictImports: true
+        strictMath: true
+        strictUnits: true
       dev:
-        options:
-          strictImports: true
-          strictMath: true
-          strictUnits: true
         files: [
           {
-            src: _clientLess
-            dest: "#{_publicCss}/client.css"
+            src: _filesLess
+            dest: "#{_publicCss}/app.css"
             nonull: true
           }
         ]
       prod:
         options:
           compress: true
-          strictImports: true
-          strictMath: true
-          strictUnits: true
         files: [
           {
-            src: _clientLess
-            dest: "#{_publicCss}/client.css"
+            src: _filesLess
+            dest: "#{_publicCss}/app.css"
             nonull: true
           }
         ]
-    uglify:
-      prod:
-        options:
-          mangle: true
-          compress: true
-          preserveComments: false
-        files: [
-          {
-            src: "#{_publicJs}/client.js"
-            dest: "#{_publicJs}/client.js"
-            nonull: true
-          }
-        ]
+    'node-inspector':
+      dev: {}
     watch:
+      options:
+        interrupt: true
+        livereload: true
+      coffee:
+        files: "#{_srcCoffee}/**/*.coffee"
+        tasks: ['browserify']
       grunt:
         files: "#{__dirname}/Gruntfile.coffee"
         tasks: ['dev']
-      coffee:
-        options:
-          interrupt: true
-          livereload: true
-        files: "#{_srcCoffee}/**"
-        tasks: ['coffee:dev']
       jade:
-        options:
-          interrupt: true
-          livereload: true
-        files: "#{_srcJade}/**"
+        files: "#{_srcJade}/**/*.jade"
         tasks: ['jade:dev']
       less:
-        options:
-          interrupt: true
-          livereload: true
-        files: "#{_srcLess}/**"
-        tasks: ['less:dev']
+        files: "#{_srcLess}/**/*.less"
+        tasks: [
+          'less:dev'
+          'autoprefixer:all'
+        ]
 
   require('load-grunt-tasks') grunt
 
   grunt.registerTask 'dev', [
     'clean'
+    'docco'
     'concat:dev'
-    'copy:copy'
+    'copy'
     'jade:dev'
-    'coffee:dev'
+    'browserify'
     'less:dev'
+    'autoprefixer'
   ]
 
   grunt.registerTask 'prod', [
     'clean'
+    'docco'
     'concat:prod'
-    'copy:copy'
+    'copy'
     'jade:prod'
-    'coffee:prod'
+    'browserify'
     'less:prod'
-    'uglify:prod'
+    'autoprefixer'
   ]
 
   return
