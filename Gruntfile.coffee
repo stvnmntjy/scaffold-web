@@ -115,9 +115,9 @@ module.exports = (grunt) ->
         ]
     clean: ["#{_public}"]
     concat:
+      options:
+        separator: '\n'
       dev:
-        options:
-          separator: '\n'
         files: [
           # css
           {
@@ -128,7 +128,6 @@ module.exports = (grunt) ->
         ]
       prod:
         options:
-          separator: '\n'
           stripBanners:
             options:
               block: true
@@ -196,6 +195,8 @@ module.exports = (grunt) ->
         strictImports: true
         strictMath: true
         strictUnits: true
+        sourceMap: true
+        outputSourceFiles: true
       dev:
         files: [
           {
@@ -218,6 +219,7 @@ module.exports = (grunt) ->
       dev: {}
     watch:
       options:
+        debug: true
         interrupt: true
         livereload: true
       coffee:
@@ -233,7 +235,6 @@ module.exports = (grunt) ->
         files: "#{_srcLess}/**/*.less"
         tasks: [
           'less:dev'
-          'autoprefixer:all'
         ]
 
   require('load-grunt-tasks') grunt
@@ -246,7 +247,6 @@ module.exports = (grunt) ->
     'jade:dev'
     'browserify'
     'less:dev'
-    'autoprefixer'
   ]
 
   grunt.registerTask 'prod', [
