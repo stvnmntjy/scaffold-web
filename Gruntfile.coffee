@@ -200,7 +200,7 @@ module.exports = (grunt) ->
       dev:
         files: [
           {
-            src: _filesLess
+            src: "#{_srcLess}/**/*.less"
             dest: "#{_publicCss}/app.css"
             nonull: true
           }
