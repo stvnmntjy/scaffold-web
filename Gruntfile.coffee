@@ -168,7 +168,7 @@ module.exports = (grunt) ->
           output: "#{_publicDoc}/test"
         src: ["#{_test}/**/*.coffee"]
     # each file will need its own object in the array since javascript does
-    # not support dynamic runtime object keys
+    # not support interpolated keys
     jade:
       dev:
         options:
@@ -190,6 +190,13 @@ module.exports = (grunt) ->
             nonull: true
           }
         ]
+    karma:
+      unit:
+        configFile: "#{_test}/karma.unit.conf.coffee"
+      integration:
+        configFile: "#{_test}/karma.integ.conf.coffee"
+      system:
+        configFile: "#{_test}/karma.system.conf.coffee"
     less:
       options:
         strictImports: true
@@ -210,7 +217,7 @@ module.exports = (grunt) ->
           compress: true
         files: [
           {
-            src: _filesLess
+            src: "#{_srcLess}/**/*.less"
             dest: "#{_publicCss}/app.css"
             nonull: true
           }
@@ -239,6 +246,10 @@ module.exports = (grunt) ->
 
   require('load-grunt-tasks') grunt
 
+#########
+# tasks #
+#########
+
   grunt.registerTask 'dev', [
     'clean'
     'docco'
@@ -247,6 +258,7 @@ module.exports = (grunt) ->
     'jade:dev'
     'browserify'
     'less:dev'
+    'autoprefixer'
   ]
 
   grunt.registerTask 'prod', [
@@ -258,6 +270,10 @@ module.exports = (grunt) ->
     'browserify'
     'less:prod'
     'autoprefixer'
+  ]
+
+  grunt.registerTask 'test', [
+    'karma:unit'
   ]
 
   return

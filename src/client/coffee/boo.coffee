@@ -1,2 +1,1 @@
-soo = -> 'too'
-coo = -> too()
+exports.moo = -> [7, 8, 9]
