@@ -1,0 +1,21 @@
+{
+    "before_tests": "mkdir -p ./public/test/unit; browserify -t coffeeify ./src/client/coffee/*.coffee ./test/unit/**/*.coffee > ./public/test/unit/test_bundle.js",
+    "fail_on_zero_tests": true,
+    "framework": "jasmine",
+    "launch_in_ci": [],
+    "launch_in_dev": ["chrome"],
+    "launchers": {
+        "PhantomJS": {
+            "phantomjs_debug_port": 9134,
+            "protocol": "tap"
+        }
+    },
+    "serve_files": [
+        "*.js"
+    ],
+    "src_files": [
+        "./../../src/client/coffee/**/*.coffee",
+        "**/*.coffee"
+    ],
+    "url": "http://localhost:9000"
+}

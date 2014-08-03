@@ -1,1 +1,1 @@
-exports.moo = -> [7, 8, 9]
+module.exports.moo = -> [7, 8, 9]

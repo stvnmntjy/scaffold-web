@@ -4,7 +4,7 @@ _ = require 'lodash'
 # folders #
 ###########
 
-_src = './src'
+_src = "#{__dirname}/src"
 _srcServer = "#{_src}/server"
 _srcClient = "#{_src}/client"
 _srcCoffee = "#{_srcClient}/coffee"
@@ -12,20 +12,23 @@ _srcJade = "#{_srcClient}/jade"
 _srcLess = "#{_srcClient}/less"
 _srcImg = "#{_srcClient}/img"
 
-_test = './test'
+_test = "#{__dirname}/test"
 _testUnit = "#{_test}/unit"
 _testInteg = "#{_test}/integration"
 _testSystem = "#{_test}/system"
 
-_public = './public'
+_public = "#{__dirname}/public"
 _publicDoc = "#{_public}/docs"
 _publicHtml = "#{_public}/html"
 _publicCss = "#{_public}/css"
 _publicFonts = "#{_public}/fonts"
 _publicImg = "#{_public}/img"
 _publicJs = "#{_public}/js"
+_publicUnit= "#{_public}/test/unit"
+_publicInteg= "#{_public}/test/integ"
+_publicSystem= "#{_public}/test/system"
 
-_npm = './node_modules'
+_npm = "#{__dirname}/node_modules"
 
 ##########
 # source #
@@ -85,34 +88,6 @@ module.exports = (grunt) ->
     autoprefixer:
       all:
         src: "#{_publicCss}/*.css"
-    browserify:
-      all:
-        options:
-          require: _npmMods
-          transform: [
-            [
-              'coffeeify'
-              {
-                sourceMap: false
-              }
-            ]
-          ]
-          plugin: [
-            [
-              'minifyify'
-              {
-                map: "/js/bundle.map"
-                output: "#{_publicJs}/bundle.map"
-              }
-            ]
-          ]
-        files: [
-          {
-            src: ["#{_srcCoffee}/**/*.coffee"]
-            dest: "#{_publicJs}/bundle.js"
-            nonull: true
-          }
-        ]
     clean: ["#{_public}"]
     concat:
       options:
@@ -190,13 +165,6 @@ module.exports = (grunt) ->
             nonull: true
           }
         ]
-    karma:
-      unit:
-        configFile: "#{_test}/karma.unit.conf.coffee"
-      integration:
-        configFile: "#{_test}/karma.integ.conf.coffee"
-      system:
-        configFile: "#{_test}/karma.system.conf.coffee"
     less:
       options:
         strictImports: true
@@ -224,6 +192,29 @@ module.exports = (grunt) ->
         ]
     'node-inspector':
       dev: {}
+    testem:
+      options:
+        fail_on_zero_tests: true
+        framework: 'jasmine'
+      integration:
+        src: ["#{_testInteg}/testem.json"]
+      system:
+        src: ["#{_testSystem}/testem.json"]
+      unit:
+        options:
+          before_tests: "browserify -t coffeeify #{_srcCoffee}/**/*.coffee #{_testUnit}/*.coffee > #{_publicUnit}/test_bundle.js"
+          launch_in_ci: []
+          launch_in_dev: ['firefox']
+          output:
+            coverage: "#{_publicUnit}/coverage"
+          serve_files: ['*.js']
+          src_files: [
+            "#{_srcCoffee}/**/*.coffee"
+            "#{_testUnit}/*.coffee"
+          ]
+        src: []
+        dest: "#{_publicUnit}/test.tap"
+        #src: ["#{_testUnit}/testem.json"]
     watch:
       options:
         debug: true
@@ -243,6 +234,32 @@ module.exports = (grunt) ->
         tasks: [
           'less:dev'
         ]
+    webpack:
+      dev:
+        stats:
+          colors: true
+          modules: true
+          reasons: true
+        context: _srcCoffee
+        entry: 'foo.coffee'
+        output:
+          path: _publicJs
+          filename: 'bundle.js'
+        resolve:
+          root: _srcCoffee
+        resolveLoader:
+          root: _npm
+        module:
+          loaders: [
+            {
+              test: /\.coffee$/
+              loader: 'coffee-loader'
+            }
+          ]
+        bail: true
+        debug: true
+        devtool: '#source-map'
+        console: true
 
   require('load-grunt-tasks') grunt
 
@@ -252,13 +269,12 @@ module.exports = (grunt) ->
 
   grunt.registerTask 'dev', [
     'clean'
-    'docco'
     'concat:dev'
     'copy'
-    'jade:dev'
-    'browserify'
     'less:dev'
     'autoprefixer'
+    'jade:dev'
+    'webpack:dev'
   ]
 
   grunt.registerTask 'prod', [
@@ -266,14 +282,14 @@ module.exports = (grunt) ->
     'docco'
     'concat:prod'
     'copy'
-    'jade:prod'
-    'browserify'
     'less:prod'
     'autoprefixer'
+    'jade:prod'
+    'webpack:prod'
   ]
 
   grunt.registerTask 'test', [
-    'karma:unit'
+    'testem:unit'
   ]
 
   return

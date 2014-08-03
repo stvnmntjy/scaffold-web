@@ -1,1 +1,1 @@
-exports.doo = -> 'too'
+module.exports.doo = -> 'too'
