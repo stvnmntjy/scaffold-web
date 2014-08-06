@@ -1,4 +1,5 @@
 _ = require 'lodash'
+webpack = require 'webpack'
 
 ###########
 # folders #
@@ -24,9 +25,7 @@ _publicCss = "#{_public}/css"
 _publicFonts = "#{_public}/fonts"
 _publicImg = "#{_public}/img"
 _publicJs = "#{_public}/js"
-_publicUnit= "#{_public}/test/unit"
-_publicInteg= "#{_public}/test/integ"
-_publicSystem= "#{_public}/test/system"
+_publicTest = "#{_public}/test"
 
 _npm = "#{__dirname}/node_modules"
 
@@ -47,11 +46,6 @@ _filesImg = _.map [
 # libraries #
 #############
 
-# npm dependency module ids
-_npmMods = [
-  'lodash'
-]
-
 # dev
 _npmCssDev = _.map [
   # order npm dev css here
@@ -69,6 +63,10 @@ _npmImg = _.map [
 _npmFont = _.map [
   # order npm font here
 ], (file) -> "#{_npm}/#{file}"
+
+#############
+# functions #
+#############
 
 copyDir = (srcDir, destDir, files) ->
   src: files
@@ -124,6 +122,17 @@ module.exports = (grunt) ->
           copyDir __dirname, _publicFonts, _npmFont
           # npm img
           copyDir __dirname, _publicImg, _npmImg
+        ]
+      test:
+        files: [
+          {
+            src: 'lib/**'
+            dest: _publicTest
+            nonull: true
+            expand: true
+            cwd: _test
+          }
+          copyDir __dirname, _publicTest, ["/test/SpecRunner.html"]
         ]
     docco:
       root:
@@ -192,29 +201,6 @@ module.exports = (grunt) ->
         ]
     'node-inspector':
       dev: {}
-    testem:
-      options:
-        fail_on_zero_tests: true
-        framework: 'jasmine'
-      integration:
-        src: ["#{_testInteg}/testem.json"]
-      system:
-        src: ["#{_testSystem}/testem.json"]
-      unit:
-        options:
-          before_tests: "browserify -t coffeeify #{_srcCoffee}/**/*.coffee #{_testUnit}/*.coffee > #{_publicUnit}/test_bundle.js"
-          launch_in_ci: []
-          launch_in_dev: ['firefox']
-          output:
-            coverage: "#{_publicUnit}/coverage"
-          serve_files: ['*.js']
-          src_files: [
-            "#{_srcCoffee}/**/*.coffee"
-            "#{_testUnit}/*.coffee"
-          ]
-        src: []
-        dest: "#{_publicUnit}/test.tap"
-        #src: ["#{_testUnit}/testem.json"]
     watch:
       options:
         debug: true
@@ -222,9 +208,12 @@ module.exports = (grunt) ->
         livereload: true
       coffee:
         files: "#{_srcCoffee}/**/*.coffee"
-        tasks: ['browserify']
+        tasks: ['webpack:dev']
       grunt:
-        files: "#{__dirname}/Gruntfile.coffee"
+        files: [
+          "#{__dirname}/package.json"
+          "#{__dirname}/Gruntfile.coffee"
+        ]
         tasks: ['dev']
       jade:
         files: "#{_srcJade}/**/*.jade"
@@ -234,21 +223,21 @@ module.exports = (grunt) ->
         tasks: [
           'less:dev'
         ]
+      unit:
+        files: [
+          "#{_srcCoffee}/**/*.coffee"
+          "#{_testUnit}/**/*.coffee"
+        ]
+        tasks: [
+          'copy:test'
+          'webpack:unit'
+        ]
     webpack:
-      dev:
+      options:
         stats:
           colors: true
           modules: true
           reasons: true
-        context: _srcCoffee
-        entry: 'foo.coffee'
-        output:
-          path: _publicJs
-          filename: 'bundle.js'
-        resolve:
-          root: _srcCoffee
-        resolveLoader:
-          root: _npm
         module:
           loaders: [
             {
@@ -256,10 +245,39 @@ module.exports = (grunt) ->
               loader: 'coffee-loader'
             }
           ]
+        resolveLoader:
+          root: _npm
         bail: true
         debug: true
         devtool: '#source-map'
         console: true
+      dev:
+        context: _srcCoffee
+        entry: 'foo.coffee'
+        output:
+          path: _publicJs
+          filename: 'bundle.js'
+        resolve:
+          root: _srcCoffee
+      prod:
+        context: _srcCoffee
+        entry: 'foo.coffee'
+        output:
+          path: _publicJs
+          filename: 'bundle.js'
+        resolve:
+          root: _srcCoffee
+        plugins: [
+          new webpack.optimize.UglifyJsPlugin()
+        ]
+      unit:
+        context: _testUnit
+        entry: 'spec-list.coffee'
+        output:
+          path: _publicTest
+          filename: 'bundle.js'
+        resolve:
+          root: _testUnit
 
   require('load-grunt-tasks') grunt
 
@@ -270,7 +288,7 @@ module.exports = (grunt) ->
   grunt.registerTask 'dev', [
     'clean'
     'concat:dev'
-    'copy'
+    'copy:copy'
     'less:dev'
     'autoprefixer'
     'jade:dev'
@@ -281,15 +299,11 @@ module.exports = (grunt) ->
     'clean'
     'docco'
     'concat:prod'
-    'copy'
+    'copy:copy'
     'less:prod'
     'autoprefixer'
     'jade:prod'
     'webpack:prod'
-  ]
-
-  grunt.registerTask 'test', [
-    'testem:unit'
   ]
 
   return
