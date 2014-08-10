@@ -132,7 +132,7 @@ module.exports = (grunt) ->
             expand: true
             cwd: _test
           }
-          copyDir __dirname, _publicTest, ["/test/SpecRunner.html"]
+          copyDir __dirname, _publicTest, ['/test/SpecRunner.html']
         ]
     docco:
       root:
@@ -201,6 +201,20 @@ module.exports = (grunt) ->
         ]
     'node-inspector':
       dev: {}
+    # grunt-testem runs testem in ci mode only
+    testem:
+      options:
+        bail_on_uncaught_error: true
+        cwd: _publicTest
+        fail_on_zero_tests: true
+      unit:
+        options:
+          launch_in_ci: ['chrome']
+        # testem.json used now because if src is
+        # the 'test_page' grunt-karma appends #testem
+        # http://git.io/iRoNFA
+        src: ["#{_test}/testem.json"]
+        dest: "#{_publicTest}/tests.tap"
     watch:
       options:
         debug: true
@@ -304,6 +318,13 @@ module.exports = (grunt) ->
     'autoprefixer'
     'jade:prod'
     'webpack:prod'
+  ]
+
+  grunt.registerTask 'unit', [
+    'dev'
+    'copy:test'
+    'webpack:unit'
+    'testem:unit'
   ]
 
   return
